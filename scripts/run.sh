@@ -9,6 +9,8 @@ set -e
 cd /home/user
 
 export PYTHONPATH="/home/user/pylibs:/home/user:$PYTHONPATH"
+export HF_HOME="/home/user/shared/hf_cache"
+export TRANSFORMERS_CACHE="/home/user/shared/hf_cache"
 
 MODEL_NAME="${MODEL_NAME:-Qwen2.5-1.5B-Instruct}"
 NUM_SAMPLES="${NUM_SAMPLES:-50}"
