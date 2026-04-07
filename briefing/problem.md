@@ -2,16 +2,20 @@
 
 What problem does this paper address? Write this so that someone with no knowledge of the paper can understand what needs to be solved and how success is measured.
 
-Do NOT describe the paper's method or solution here — only the problem itself. Think about if a future scientist agent try to solve this problem from scratch without knowing what approach the paper took. If you leak the solution, you compromise the benchmark.
-
 ## Research Question
 
-<!-- What problem or challenge does this paper tackle? What gap in existing work does it address? -->
+Chain-of-thought (CoT) reasoning enables LLMs to solve complex multi-step problems, but a key failure mode emerges when the number of required reasoning steps (hops) increases beyond the training distribution. When problems require more reasoning hops — even if the underlying algorithmic skill is identical — model accuracy drops sharply. This is called **reasoning hop generalization failure**.
+
+Example: A model that correctly computes 2-digit × 2-digit multiplication may fail at 3-digit × 6-digit multiplication, even though both require the same multi-digit multiplication algorithm. The model has learned the algorithm but cannot generalize it to longer chains of reasoning.
 
 ## Why It Matters
 
-<!-- Why is this problem important? What would a good solution enable? Make it short -->
+Hop generalization failures reveal a fundamental brittleness in LLMs' reasoning capabilities. If models cannot reliably extend learned reasoning skills to longer chains, their reliability in real-world complex reasoning tasks is severely limited. A good solution would enable LLMs to consistently apply reasoning skills across varying problem complexity without needing fine-tuning on each specific hop count.
 
 ## Success Criteria
 
-<!-- What would a successful solution look like? What properties should it have? This is about the goal, not the paper's specific approach. Make it short -->
+A successful solution should:
+1. **Improve accuracy on longer-hop reasoning tasks** compared to unmodified LLM outputs, measured by final answer accuracy.
+2. **Maintain or improve performance across varying hop counts** — ideally, accuracy should remain stable as hop count increases.
+3. **Be applicable at test time** without requiring fine-tuning on the specific downstream task.
+4. **Be lightweight and compatible** with off-the-shelf LLMs without architectural changes.

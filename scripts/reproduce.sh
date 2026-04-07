@@ -1,24 +1,49 @@
 #!/bin/bash
-# Reproduce the paper's results end-to-end.
+# End-to-end reproduction of the paper's results.
 #
-# This script runs inside the compute container and should call
-# scripts/baseline.sh and scripts/method.sh to run baselines and
-# the paper's method, each of which calls scripts/evaluate.sh.
+# This script runs inside the compute container and reproduces the paper's
+# main claim: TCR improves reasoning hop generalization accuracy.
 #
 # Assumes:
-#   - Container is built (environment/container.sif)
-#   - Data and models are downloaded (via scripts/download.sh)
+#   - Container is built
+#   - Data and models are downloaded via scripts/download.sh
 #   - Working directory is /home/user
 #
-# This is the "gold standard" reproduction — 
-# You do not need to run this, but keep this in good shape
-# so other agents can easily run a full loop of reproduction and get the paper's numbers.
+# Usage:
+#   bash scripts/reproduce.sh
 
 set -e
 
 cd /home/user
 
-# TODO: implement full reproduction pipeline
-# e.g.:
-#   bash scripts/baseline.sh
-#   bash scripts/method.sh
+MODEL_NAME="${MODEL_NAME:-Qwen2.5-1.5B-Instruct}"
+NUM_SAMPLES="${NUM_SAMPLES:-100}"
+SEED="${SEED:-42}"
+
+echo "============================================"
+echo "TCR Paper Reproduction"
+echo "Model: $MODEL_NAME"
+echo "Samples per task: $NUM_SAMPLES"
+echo "============================================"
+
+# Step 1: Baseline evaluation
+echo ""
+echo "=== Step 1: Baseline (no intervention) ==="
+bash scripts/baseline.sh
+
+# Step 2: TCR method
+echo ""
+echo "=== Step 2: TCR Method ==="
+bash scripts/method.sh
+
+# Step 3: Evaluate and compare
+echo ""
+echo "=== Step 3: Final Evaluation ==="
+bash scripts/evaluate.sh
+
+echo ""
+echo "============================================"
+echo "Reproduction complete!"
+echo "See scoring/scores.json for results"
+echo "See scoring/reference.json for paper's numbers"
+echo "============================================"

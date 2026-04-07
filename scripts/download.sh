@@ -1,30 +1,52 @@
 #!/bin/bash
 # Download all data and models needed for this environment.
 #
-# Run on a node with internet access BEFORE building the container
-# or submitting compute jobs.
+# Estimated total download size: ~4 GB
+# Estimated disk usage after extraction: ~4 GB
 #
-# This script should be idempotent — safe to run multiple times.
-# It should skip files that already exist.
+# Models used:
+#   - Qwen2.5-1.5B-Instruct: ~3 GB (already in /home/user/shared/models/)
+#   - Qwen2.5-0.5B-Instruct: ~1 GB (head selector, paper uses this)
 #
-# Update the storage estimate below as you add downloads.
-#
-# Estimated total download size: TODO GB
-# Estimated disk usage after extraction: TODO GB
-#
-# During reproduction, prefer downloading to shared directories
-# (shared/datasets/, shared/models/) so other papers can reuse them.
-# You do not need to run this script during reproduction — it exists
-# for future portability. Write it to download to workspace-local
-# paths (data/, checkpoints/) instead of the shared directories
-# so a future user with just the workspace can run this script and get everything they need.
+# Datasets are synthetically generated - no external downloads needed.
 
 set -e
 
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
-# TODO: implement downloads
-# Examples:
-#   wget -nc https://example.com/dataset.tar.gz -P data/
-#   python -c "from huggingface_hub import snapshot_download; snapshot_download('model/name', local_dir='checkpoints/')"
-#   huggingface-cli download Qwen/Qwen3-1.7B --local-dir /checkpoints/Qwen3-1.7B
+echo "=== TCR Environment Downloads ==="
+
+SHARED_MODELS="/home/user/shared/models"
+WORKSPACE_MODELS="/home/user/models"
+mkdir -p "$WORKSPACE_MODELS"
+
+# Qwen2.5-1.5B-Instruct (main model - likely already in shared)
+if [ -d "$SHARED_MODELS/Qwen2.5-1.5B-Instruct" ]; then
+    echo "Qwen2.5-1.5B-Instruct found at $SHARED_MODELS/Qwen2.5-1.5B-Instruct"
+    echo "  (Will use this as the main model)"
+else
+    echo "Downloading Qwen2.5-1.5B-Instruct..."
+    huggingface-cli download Qwen/Qwen2.5-1.5B-Instruct \
+        --local-dir "$WORKSPACE_MODELS/Qwen2.5-1.5B-Instruct" \
+        --local-dir-use-symlinks False \
+        2>&1 | tail -5
+fi
+
+# Qwen2.5-0.5B-Instruct (head selector, paper uses this)
+if [ -d "$WORKSPACE_MODELS/Qwen2.5-0.5B-Instruct" ]; then
+    echo "Qwen2.5-0.5B-Instruct found at $WORKSPACE_MODELS/Qwen2.5-0.5B-Instruct"
+elif [ -d "$SHARED_MODELS/Qwen2.5-0.5B-Instruct" ]; then
+    echo "Qwen2.5-0.5B-Instruct found at $SHARED_MODELS/Qwen2.5-0.5B-Instruct"
+else
+    echo "Downloading Qwen2.5-0.5B-Instruct..."
+    huggingface-cli download Qwen/Qwen2.5-0.5B-Instruct \
+        --local-dir "$WORKSPACE_MODELS/Qwen2.5-0.5B-Instruct" \
+        --local-dir-use-symlinks False \
+        2>&1 | tail -5
+fi
+
+echo "=== Downloads complete ==="
+echo "Model locations:"
+ls -d "$SHARED_MODELS"/Qwen2.5-* 2>/dev/null || echo "  (none in shared)"
+ls -d "$WORKSPACE_MODELS"/Qwen2.5-* 2>/dev/null || echo "  (none in workspace)"

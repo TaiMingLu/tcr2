@@ -1,0 +1,125 @@
+{
+  "experiments": {
+    "tcr_hop_generalization": {
+      "description": "Reasoning hop generalization: TCR improves accuracy across 7 tasks with Qwen2.5-7B-Instruct (Table 2 of paper). Task-specific hop counts: Parity-NL(50), MDM(3x6), LLC(6), CLF(30), MOAS(50), ObjC(30), NumS(10).",
+      "weight": 1.0,
+      "primary_metric": "average_accuracy",
+      "metrics": {
+        "average_accuracy": {"higher_is_better": true, "coefficient": 1.0},
+        "parity_nl_accuracy": {"higher_is_better": true, "coefficient": 0.2},
+        "mdm_accuracy": {"higher_is_better": true, "coefficient": 0.2},
+        "llc_accuracy": {"higher_is_better": true, "coefficient": 0.1},
+        "clf_accuracy": {"higher_is_better": true, "coefficient": 0.1},
+        "moas_accuracy": {"higher_is_better": true, "coefficient": 0.1},
+        "objc_accuracy": {"higher_is_better": true, "coefficient": 0.1},
+        "nums_accuracy": {"higher_is_better": true, "coefficient": 0.1}
+      },
+      "results": {
+        "Qwen2.5-7B-Baseline": {
+          "type": "baseline",
+          "average_accuracy": 41.7,
+          "parity_nl_accuracy": 48.3,
+          "mdm_accuracy": 43.0,
+          "llc_accuracy": 11.7,
+          "clf_accuracy": 56.8,
+          "moas_accuracy": 39.2,
+          "objc_accuracy": 52.0,
+          "nums_accuracy": 41.1
+        },
+        "Qwen2.5-7B-TCR": {
+          "type": "proposed",
+          "average_accuracy": 48.5,
+          "parity_nl_accuracy": 60.4,
+          "mdm_accuracy": 48.2,
+          "llc_accuracy": 16.2,
+          "clf_accuracy": 66.6,
+          "moas_accuracy": 46.0,
+          "objc_accuracy": 56.0,
+          "nums_accuracy": 46.0,
+          "improvement_over_baseline": 6.8
+        },
+        "Qwen2.5-7B-TCR-gold": {
+          "type": "proposed",
+          "average_accuracy": 61.3,
+          "parity_nl_accuracy": 81.2,
+          "mdm_accuracy": 58.3,
+          "llc_accuracy": 23.0,
+          "clf_accuracy": 71.3,
+          "moas_accuracy": 62.0,
+          "objc_accuracy": 76.0,
+          "nums_accuracy": 54.5,
+          "improvement_over_baseline": 19.6
+        },
+        "Phi-3-Baseline": {
+          "type": "baseline",
+          "average_accuracy": 32.2,
+          "parity_nl_accuracy": 51.2,
+          "mdm_accuracy": 8.1,
+          "llc_accuracy": 53.1,
+          "clf_accuracy": 9.2,
+          "moas_accuracy": 1.0,
+          "objc_accuracy": 30.9,
+          "nums_accuracy": 72.0
+        },
+        "Phi-3-TCR": {
+          "type": "proposed",
+          "average_accuracy": 37.1,
+          "parity_nl_accuracy": 55.8,
+          "mdm_accuracy": 11.5,
+          "llc_accuracy": 56.1,
+          "clf_accuracy": 11.2,
+          "moas_accuracy": 4.0,
+          "objc_accuracy": 45.0,
+          "nums_accuracy": 76.0,
+          "improvement_over_baseline": 4.9
+        },
+        "LLaMA3-8B-Baseline": {
+          "type": "baseline",
+          "average_accuracy": 37.5,
+          "parity_nl_accuracy": 70.0,
+          "mdm_accuracy": 0.0,
+          "llc_accuracy": 81.0,
+          "clf_accuracy": 15.2,
+          "moas_accuracy": 22.9,
+          "objc_accuracy": 68.8,
+          "nums_accuracy": 4.5
+        },
+        "LLaMA3-8B-TCR": {
+          "type": "proposed",
+          "average_accuracy": 43.9,
+          "parity_nl_accuracy": 82.0,
+          "mdm_accuracy": 0.0,
+          "llc_accuracy": 82.3,
+          "clf_accuracy": 28.2,
+          "moas_accuracy": 39.4,
+          "objc_accuracy": 67.8,
+          "nums_accuracy": 7.8,
+          "improvement_over_baseline": 6.4
+        },
+        "Qwen3-8B-Baseline": {
+          "type": "baseline",
+          "average_accuracy": 80.5,
+          "parity_nl_accuracy": 98.7,
+          "mdm_accuracy": 24.7,
+          "llc_accuracy": 67.5,
+          "clf_accuracy": 96.9,
+          "moas_accuracy": 92.7,
+          "objc_accuracy": 85.0,
+          "nums_accuracy": 98.0
+        },
+        "Qwen3-8B-TCR": {
+          "type": "proposed",
+          "average_accuracy": 82.1,
+          "parity_nl_accuracy": 100.0,
+          "mdm_accuracy": 29.3,
+          "llc_accuracy": 68.0,
+          "clf_accuracy": 97.0,
+          "moas_accuracy": 93.6,
+          "objc_accuracy": 88.1,
+          "nums_accuracy": 99.0,
+          "improvement_over_baseline": 1.6
+        }
+      }
+    }
+  }
+}
