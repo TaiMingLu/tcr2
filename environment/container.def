@@ -1,12 +1,10 @@
-# Apptainer definition file for TCR reasoning hop generalization environment.
-#
-# Build:  apptainer build container.sif container.def
-#
-# Using nvidia/cuda base image (Docker Hub).
-# Rate limits are transient — retries usually succeed.
+# Minimal container definition using ubuntu:22.04 base.
+# CUDA runtime should already be available on GPU nodes.
+# The nvidia/cuda image is needed only for CUDA development; for runtime,
+# ubuntu base + existing GPU drivers is sufficient.
 
 Bootstrap: docker
-From: nvidia/cuda:12.1.0-runtime-ubuntu22.04
+From: ubuntu:22.04
 
 %post
     apt-get update && apt-get install -y --no-install-recommends \
