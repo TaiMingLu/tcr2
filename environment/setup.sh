@@ -1,35 +1,22 @@
 #!/bin/bash
 # Install Python packages into the container overlay.
-#
-# All Python packages (PyTorch, transformers, etc.) go here, NOT in container.def.
-# Only OS-level packages go in container.def.
-#
-# IMPORTANT: Install into the SYSTEM Python, not a virtual environment.
-# Use: uv pip install --system <packages>
+# uv is pre-installed in the base CUDA container.
 
 set -e
 
 echo "=== Installing Python packages for TCR environment ==="
 
-# Core ML dependencies
+# Install core packages - these are cached locally in /home/user/pylibs
+# but we reinstall to ensure they're in the system Python
 uv pip install --system \
     torch \
-    torchvision \
-    torchaudio \
     numpy \
+    scipy \
     scikit-learn \
-    scipy
-
-# Transformers and related
-uv pip install --system \
     transformers \
+    huggingface_hub \
     accelerate \
     peft \
-    huggingface_hub
-
-# Data processing
-uv pip install --system \
-    pandas \
     tqdm
 
 echo "=== Package installation complete ==="

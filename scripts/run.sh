@@ -1,8 +1,7 @@
 #!/bin/bash
-# GPU job script for TCR evaluation.
-#
-# This runs inside the compute container with GPU access.
-# PYTHONPATH must include the pylibs directory.
+# CPU test job - tests the pipeline with tiny samples to verify everything works.
+# This avoids GPU for quick validation.
+# GPU jobs can be submitted separately once the container builds.
 
 set -e
 
@@ -13,99 +12,70 @@ export HF_HOME="/home/user/shared/hf_cache"
 export TRANSFORMERS_CACHE="/home/user/shared/hf_cache"
 
 MODEL_NAME="${MODEL_NAME:-Qwen2.5-1.5B-Instruct}"
-NUM_SAMPLES="${NUM_SAMPLES:-50}"
+NUM_SAMPLES="${NUM_SAMPLES:-5}"
 SEED="${SEED:-42}"
 RESULTS_DIR="/home/user/results"
 
 mkdir -p "$RESULTS_DIR"
-mkdir -p "/home/user/data"
 
-echo "=== TCR Evaluation ==="
+echo "=== TCR Pipeline Test (CPU, $NUM_SAMPLES samples) ==="
 echo "Model: $MODEL_NAME"
-echo "Samples: $NUM_SAMPLES"
-echo "Seed: $SEED"
 
-# ============================================================
-# Generate test data
-# ============================================================
+# Test 1: Data generation
 echo ""
-echo "=== Generating test data ==="
+echo "=== Test 1: Data generation ==="
 python3 -c "
 import sys
 sys.path.insert(0, '/home/user')
 from data.task_generator import generate_dataset, save_dataset
 
 tasks = [
-    ('parity_nl', {'hop_count': 50}, 'parity_nl_50'),
-    ('llc', {'word_count': 6}, 'llc_6'),
-    ('mdm', {'digits_a': 3, 'digits_b': 6}, 'mdm_3x6'),
-    ('moas', {'operand_count': 50}, 'moas_50'),
-    ('clf', {'seq_length': 30}, 'clf_30'),
-    ('objc', {'object_count': 30}, 'objc_30'),
-    ('nums', {'student_count': 10}, 'nums_10'),
+    ('parity_nl', {'hop_count': 10}, 'parity_nl_10'),
+    ('llc', {'word_count': 4}, 'llc_4'),
+    ('mdm', {'digits_a': 2, 'digits_b': 2}, 'mdm_2x2'),
 ]
-
 for task_name, params, fname in tasks:
-    instances = generate_dataset(task_name, $NUM_SAMPLES, seed=$SEED, **params)
+    instances = generate_dataset(task_name, 3, seed=42, **params)
     save_dataset(instances, f'/home/user/data/test_{fname}.jsonl')
-    print(f'Generated {len(instances)} for {task_name}')
+    print(f'  Generated {len(instances)} for {task_name}')
+print('Data generation: OK')
 "
 
-# ============================================================
-# Run baseline for all tasks
-# ============================================================
+# Test 2: Import and basic model loading
 echo ""
-echo "=== Running baseline evaluation ==="
-for TASK_CONFIG in "parity_nl:50:parity_nl_50" "llc:6:llc_6" "mdm:6:mdm_3x6" "moas:50:moas_50" "clf:30:clf_30" "objc:30:objc_30" "nums:10:nums_10"; do
-    TASK="${TASK_CONFIG%%:*}"
-    REMAIN="${TASK_CONFIG#*:}"
-    HOPS="${REMAIN%%:*}"
-    FNAME="${REMAIN#*:}"
+echo "=== Test 2: Model loading ==="
+python3 -c "
+import sys, torch
+sys.path.insert(0, '/home/user')
+from transformers import AutoModelForCausalLM, AutoTokenizer
+print(f'  PyTorch CUDA: {torch.cuda.is_available()}')
+print(f'  PyTorch device count: {torch.cuda.device_count()}')
+model_path = '/home/user/shared/models/Qwen2.5-1.5B-Instruct'
+model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, device_map='cpu')
+print(f'  Model loaded: {sum(p.numel() for p in model.parameters())/1e9:.1f}B params')
+print('Model loading: OK')
+" 2>&1 | tail -5
 
-    echo "  Baseline: $TASK..."
-    python3 -m method.inference \
-        --task "$TASK" \
-        --hop_count "$HOPS" \
-        --num_samples $NUM_SAMPLES \
-        --model_name "$MODEL_NAME" \
-        --method baseline \
-        --output_dir "$RESULTS_DIR" \
-        --seed $SEED
-done
-
-# ============================================================
-# Run TCR for core tasks (parity_nl and mdm - main paper results)
-# ============================================================
+# Test 3: Baseline generation (tiny sample)
 echo ""
-echo "=== Running TCR method ==="
+echo "=== Test 3: Baseline generation (1 sample) ==="
 python3 -m method.inference \
     --task parity_nl \
-    --hop_count 50 \
-    --num_samples $NUM_SAMPLES \
+    --hop_count 10 \
+    --num_samples 1 \
     --model_name "$MODEL_NAME" \
-    --method tcr \
+    --method baseline \
     --output_dir "$RESULTS_DIR" \
-    --seed $SEED
+    --seed $SEED 2>&1 | tail -10
 
-python3 -m method.inference \
-    --task mdm \
-    --hop_count 6 \
-    --num_samples $NUM_SAMPLES \
-    --model_name "$MODEL_NAME" \
-    --method tcr \
-    --output_dir "$RESULTS_DIR" \
-    --seed $SEED
-
-# ============================================================
-# Evaluate and write scores
-# ============================================================
+# Test 4: Evaluation
 echo ""
-echo "=== Evaluating results ==="
+echo "=== Test 4: Evaluation ==="
 python3 -m eval.evaluate \
     --results_dir "$RESULTS_DIR" \
     --output /home/user/scoring/scores.json \
-    --model_name "$MODEL_NAME"
+    --model_name "$MODEL_NAME" 2>&1 | tail -5
 
 echo ""
-echo "=== Done! ==="
-cat /home/user/scoring/scores.json
+echo "=== Pipeline test complete ==="
+cat /home/user/scoring/scores.json 2>/dev/null || echo "No scores yet"

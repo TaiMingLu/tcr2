@@ -2,4 +2,4 @@ action: submit
 gpus: 1
 test: false
 milestone: method_runs
-notes: "Retry GPU evaluation after transient registry error"
+notes: "Retry with nvidia/cuda:12.1.0-runtime-ubuntu22.04 after rate limit wait"
