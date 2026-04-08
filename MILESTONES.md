@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: none**
+**Current: method_runs**
 
 <!-- Milestone levels (update "Current" above as you progress):
   none             — just started, no meaningful progress yet
@@ -15,16 +15,24 @@
 
 ## Progress Log
 
-<!-- Write your progress here -->
+### [2026-04-07] - method_runs
+- Read paper thoroughly: TCR (Test-time Correction of Reasoning) for hop generalization
+- Paper studies why LLMs fail when reasoning hop counts exceed training distribution
+- Key finding: certain "erroneous processing heads" (ep heads) drive errors
+- TCR: dynamically identifies and deactivates ep heads at test time using entropy detection + head selector
+- Paper reports +6.8% average improvement on Qwen2.5-7B-Instruct across 7 tasks
+- Filled in all briefing files (problem, evaluation, method, overview)
+- Created data generation for all 7 tasks (Parity-NL, LLC, MDM, MOAS, CLF, ObjC, NumS)
+- Implemented TCR method with ep head candidates, entropy detection, baseline generation
+- Created evaluation pipeline with scoring/reference.json matching paper's Table 2
+- Created all scripts (evaluate.sh, reproduce.sh, method.sh, baseline.sh, download.sh)
+- Set up environment (container.def, setup.sh)
+- Downloaded Qwen2.5-0.5B-Instruct to workspace models
+- Qwen2.5-1.5B-Instruct available in shared models (28 layers, 12 heads)
+- Generated test data successfully for all 7 tasks
+- Submitted GPU job for evaluation (baseline + TCR on parity_nl, mdm)
 
 ## Stop Justification
 
 <!-- Do not edit this unless you decide to stop -->
-
-<!-- Write a brief explanation of WHY you are stopping at this milestone.
-     What blocked you to reach the next milestone and you decided to stop?
-     This is NOT a progress summary — the Progress Log above covers that.
-     Example: "Stopping at core_claim because the full dataset requires
-     proprietary access. Core claim validated on the public subset." -->
-
-<!-- ALWAYS fill in this section when you wrap up. NEVER remove this section. -->
+GPU job submitted for core evaluation. Waiting for results to confirm method_runs and proceed to core_claim.

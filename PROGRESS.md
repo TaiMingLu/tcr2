@@ -2,36 +2,46 @@
 
 ## What Works
 
-<!-- What has been successfully reproduced so far. -->
+- Data generation for all 7 reasoning hop generalization tasks (Parity-NL, LLC, MDM, MOAS, CLF, ObjC, NumS)
+- Baseline LLM generation with CoT prompting (Qwen2.5-1.5B-Instruct from shared models)
+- TCR method implementation with entropy-based error detection and head knockout
+- Evaluation pipeline with scoring/reference.json
+- All scripts (evaluate, reproduce, method, baseline, download)
+- Container environment setup
 
 ## Results
 
 <!-- Reproduced numbers compared to the paper's reported numbers. -->
+Pending GPU evaluation.
 
 ## Remaining
 
-<!-- What still needs to be done to reach higher milestones. -->
+- GPU job to run baseline + TCR evaluation
+- Compare baseline vs TCR accuracy on parity_nl and mdm tasks
+- Expand to all 7 tasks
+- Train head selector classifier (optional, for full TCR)
 
 ## Issues
 
-<!-- Blockers, bugs, or difficulties encountered. -->
+- CPU-only node: generation is slow on CPU, GPU job needed for actual evaluation
+- Qwen2.5-1.5B has 12 attention heads (vs 32 in paper's 7B model), ep heads scaled accordingly
+- TCR-gold implementation is simplified (not doing full oracle knockout yet)
 
 ## Deviations from Paper
 
-<!-- Do not edit this section unless you deviated from the paper's original setup.
-     For each deviation, document: what the paper used, what you substituted, and why.
+### Model Size
+- **Paper uses**: Qwen2.5-7B-Instruct (32 heads per layer)
+- **We use**: Qwen2.5-1.5B-Instruct (12 heads per layer)
+- **Why**: 7B model not available in shared cache; 1.5B is the largest Qwen2.5 available
+- **Impact**: Ep head indices scaled proportionally; results may differ from paper
 
-     ACCEPTABLE deviations (data/resource/scale substitutions — milestones still valid):
-       - Replaced a proprietary dataset with a public one
-       - Used a smaller model of the same architecture
-       - Scaled down training (fewer epochs, smaller batch)
-       - Used a different library for the same algorithm
+### Ep Head Candidates
+- **Paper**: Identified via mechanistic analysis with full head knockout experiments
+- **We use**: Scaled candidate heads from paper's 7B model to 1.5B architecture
+- **Impact**: May not perfectly match the actual ep heads in 1.5B model
 
-     UNACCEPTABLE deviations (algorithm substitutions — milestones above 'none' are void):
-       - Replaced the paper's algorithm with a fundamentally different one
-       - Wrote a generic model trained to approximate the method's outputs
-         instead of implementing the method's computational steps
-
-     The test: could someone reading your code identify which algorithm from
-     the paper you implemented? If not, you replaced the method. -->
-
+### TCR Implementation
+- **Paper**: Uses trained head selector (Qwen2.5-0.5B fine-tuned) + majority voting
+- **We use**: Simplified entropy-based detection with greedy token selection
+- **Why**: Training head selector requires ~20K labeled samples and LoRA fine-tuning
+- **Impact**: Simplified TCR may show smaller improvements than paper's full method
