@@ -7,23 +7,22 @@
 - TCR method implementation with entropy-based error detection and head knockout
 - Evaluation pipeline with scoring/reference.json
 - All scripts (evaluate, reproduce, method, baseline, download)
-- Container environment setup
+- Container environment setup (ubuntu:22.04 base)
+- Git history rewritten: removed pylibs (4.6GB) and trajectory files
 
 ## Results
 
-<!-- Reproduced numbers compared to the paper's reported numbers. -->
-Pending GPU evaluation.
+Pending GPU evaluation. Job submitted to cluster.
 
 ## Remaining
 
-- GPU job to run baseline + TCR evaluation
-- Compare baseline vs TCR accuracy on parity_nl and mdm tasks
-- Expand to all 7 tasks
+- GPU job execution on compute cluster
+- Compare baseline vs TCR accuracy on all 7 tasks
 - Train head selector classifier (optional, for full TCR)
 
 ## Issues
 
-- CPU-only node: generation is slow on CPU, GPU job needed for actual evaluation
+- CPU-only login node: generation is slow on CPU, GPU job needed
 - Qwen2.5-1.5B has 12 attention heads (vs 32 in paper's 7B model), ep heads scaled accordingly
 - TCR-gold implementation is simplified (not doing full oracle knockout yet)
 
@@ -31,7 +30,7 @@ Pending GPU evaluation.
 
 ### Model Size
 - **Paper uses**: Qwen2.5-7B-Instruct (32 heads per layer)
-- **We use**: Qwen2.5-1.5B-Instruct (12 heads per layer)
+- **We use**: Qwen2.5-1.5B-Instruct (28 layers, 12 heads per layer)
 - **Why**: 7B model not available in shared cache; 1.5B is the largest Qwen2.5 available
 - **Impact**: Ep head indices scaled proportionally; results may differ from paper
 
