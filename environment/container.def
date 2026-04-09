@@ -1,10 +1,9 @@
-# Minimal container definition using ubuntu:22.04 base.
-# CUDA runtime should already be available on GPU nodes.
-# The nvidia/cuda image is needed only for CUDA development; for runtime,
-# ubuntu base + existing GPU drivers is sufficient.
+# Container definition for TCR reproduction.
+# Uses nvidia/cuda runtime image for GPU support.
+# The CUDA runtime libraries enable PyTorch GPU acceleration on cluster GPUs.
 
 Bootstrap: docker
-From: ubuntu:22.04
+From: nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 %post
     apt-get update && apt-get install -y --no-install-recommends \

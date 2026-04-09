@@ -1,7 +1,7 @@
 #!/bin/bash
-# CPU test job - tests the pipeline with tiny samples to verify everything works.
-# This avoids GPU for quick validation.
-# GPU jobs can be submitted separately once the container builds.
+# GPU reproduction job for TCR paper (2601.21214).
+# Runs baseline and TCR on parity_nl tasks to demonstrate hop generalization.
+# Writes results to /home/user/scoring/scores.json.
 
 set -e
 
@@ -12,70 +12,86 @@ export HF_HOME="/home/user/shared/hf_cache"
 export TRANSFORMERS_CACHE="/home/user/shared/hf_cache"
 
 MODEL_NAME="${MODEL_NAME:-Qwen2.5-1.5B-Instruct}"
-NUM_SAMPLES="${NUM_SAMPLES:-5}"
+NUM_SAMPLES="${NUM_SAMPLES:-100}"
 SEED="${SEED:-42}"
 RESULTS_DIR="/home/user/results"
 
-mkdir -p "$RESULTS_DIR"
-
-echo "=== TCR Pipeline Test (CPU, $NUM_SAMPLES samples) ==="
+echo "============================================"
+echo "TCR Paper Reproduction (GPU)"
 echo "Model: $MODEL_NAME"
+echo "Samples per task: $NUM_SAMPLES"
+echo "============================================"
 
-# Test 1: Data generation
+# Check GPU availability
 echo ""
-echo "=== Test 1: Data generation ==="
+echo "=== GPU Smoke Test ==="
 python3 -c "
-import sys
-sys.path.insert(0, '/home/user')
-from data.task_generator import generate_dataset, save_dataset
-
-tasks = [
-    ('parity_nl', {'hop_count': 10}, 'parity_nl_10'),
-    ('llc', {'word_count': 4}, 'llc_4'),
-    ('mdm', {'digits_a': 2, 'digits_b': 2}, 'mdm_2x2'),
-]
-for task_name, params, fname in tasks:
-    instances = generate_dataset(task_name, 3, seed=42, **params)
-    save_dataset(instances, f'/home/user/data/test_{fname}.jsonl')
-    print(f'  Generated {len(instances)} for {task_name}')
-print('Data generation: OK')
+import torch
+print(f'PyTorch: {torch.__version__}')
+print(f'CUDA available: {torch.cuda.is_available()}')
+if torch.cuda.is_available():
+    print(f'GPU count: {torch.cuda.device_count()}')
+    print(f'GPU 0: {torch.cuda.get_device_name(0)}')
 "
 
-# Test 2: Import and basic model loading
+# Smoke test: load model on GPU
 echo ""
-echo "=== Test 2: Model loading ==="
+echo "=== Model Loading Test ==="
 python3 -c "
 import sys, torch
-sys.path.insert(0, '/home/user')
 from transformers import AutoModelForCausalLM, AutoTokenizer
-print(f'  PyTorch CUDA: {torch.cuda.is_available()}')
-print(f'  PyTorch device count: {torch.cuda.device_count()}')
+sys.path.insert(0, '/home/user')
 model_path = '/home/user/shared/models/Qwen2.5-1.5B-Instruct'
-model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, device_map='cpu')
-print(f'  Model loaded: {sum(p.numel() for p in model.parameters())/1e9:.1f}B params')
-print('Model loading: OK')
-" 2>&1 | tail -5
+model = AutoModelForCausalLM.from_pretrained(
+    model_path, torch_dtype=torch.float16, device_map='auto', low_cpu_mem_usage=True
+)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+print(f'Model loaded: {sum(p.numel() for p in model.parameters())/1e9:.2f}B params')
+print(f'Device map: {model.hf_device_map}')
+del model, tokenizer
+import gc; gc.collect(); torch.cuda.empty_cache()
+print('Model test: PASSED')
+"
 
-# Test 3: Baseline generation (tiny sample)
+# Run baseline and TCR for parity_nl at different hop counts
 echo ""
-echo "=== Test 3: Baseline generation (1 sample) ==="
+echo "=== Baseline: parity_nl (10 hops) ==="
 python3 -m method.inference \
-    --task parity_nl \
-    --hop_count 10 \
-    --num_samples 1 \
-    --model_name "$MODEL_NAME" \
-    --method baseline \
-    --output_dir "$RESULTS_DIR" \
-    --seed $SEED 2>&1 | tail -10
+    --task parity_nl --hop_count 10 \
+    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
+    --method baseline --output_dir "$RESULTS_DIR" --seed $SEED
 
-# Test 4: Evaluation
 echo ""
-echo "=== Test 4: Evaluation ==="
+echo "=== TCR: parity_nl (10 hops) ==="
+python3 -m method.inference \
+    --task parity_nl --hop_count 10 \
+    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
+    --method tcr --output_dir "$RESULTS_DIR" --seed $SEED
+
+echo ""
+echo "=== Baseline: parity_nl (20 hops) ==="
+python3 -m method.inference \
+    --task parity_nl --hop_count 20 \
+    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
+    --method baseline --output_dir "$RESULTS_DIR" --seed $SEED
+
+echo ""
+echo "=== TCR: parity_nl (20 hops) ==="
+python3 -m method.inference \
+    --task parity_nl --hop_count 20 \
+    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
+    --method tcr --output_dir "$RESULTS_DIR" --seed $SEED
+
+# Evaluate and produce scores
+echo ""
+echo "=== Final Evaluation ==="
 python3 -m eval.evaluate \
     --results_dir "$RESULTS_DIR" \
     --output /home/user/scoring/scores.json \
-    --model_name "$MODEL_NAME" 2>&1 | tail -5
+    --model_name "$MODEL_NAME"
 
 echo ""
-echo "=== Pipeline test complete ==="
-cat /home/user/scoring/scores.json 2>/dev/null || echo "No scores yet"
+echo "============================================"
+echo "Reproduction complete!"
+cat /home/user/scoring/scores.json
+echo "============================================"
