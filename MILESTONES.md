@@ -1,6 +1,6 @@
 # Reproduction Milestones
 
-**Current: method_runs** (submitted for GPU execution)
+**Current: method_runs** (GPU job submitted: baseline + TCR on parity_nl)
 
 <!-- Milestone levels (update "Current" above as you progress):
   none             — just started, no meaningful progress yet
@@ -14,6 +14,13 @@
 -->
 
 ## Progress Log
+
+### [2026-04-09] - method_runs (GPU job submitted)
+- Updated run.sh to execute GPU reproduction: baseline + TCR on parity_nl at 10 and 20 hops
+- Updated container.def to use nvidia/cuda:12.1.0-runtime-ubuntu22.04 for GPU support
+- Committed and pushed to GitHub (c14ec4e)
+- GPU job submitted via action.yaml:submit
+- Waiting for container build and job execution
 
 ### [2026-04-08] - method_runs (submitted)
 - Git history rewritten: removed pylibs (19,989 files, 4.6GB) and trajectory files from git tracking

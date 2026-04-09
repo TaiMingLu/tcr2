@@ -7,7 +7,7 @@
 - TCR method implementation with entropy-based error detection and head knockout
 - Evaluation pipeline with scoring/reference.json
 - All scripts (evaluate, reproduce, method, baseline, download)
-- Container environment setup (ubuntu:22.04 base)
+- Container environment setup (nvidia/cuda:12.1.0-runtime-ubuntu22.04 base for GPU support)
 - Git history rewritten: removed pylibs (4.6GB) and trajectory files
 
 ## Results
