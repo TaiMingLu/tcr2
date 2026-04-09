@@ -1,9 +1,9 @@
 # Container definition for TCR reproduction.
-# Uses nvidia/cuda runtime image for GPU support.
-# The CUDA runtime libraries enable PyTorch GPU acceleration on cluster GPUs.
+# Uses NVCR.io (NVIDIA NGC registry) to avoid Docker Hub rate limits.
+# NGC registry has CUDA images without Docker Hub rate limiting.
 
 Bootstrap: docker
-From: nvidia/cuda:12.1.0-runtime-ubuntu22.04
+From: nvcr.io/nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 %post
     apt-get update && apt-get install -y --no-install-recommends \
