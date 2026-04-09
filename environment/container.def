@@ -1,9 +1,9 @@
 # Container definition for TCR reproduction.
-# Uses NVCR.io (NVIDIA NGC registry) to avoid Docker Hub rate limits.
-# NGC registry has CUDA images without Docker Hub rate limiting.
+# Uses ubuntu:22.04 base. GPU nodes have nvidia drivers + CUDA runtime pre-installed.
+# Python packages are pre-cached in /home/user/pylibs and accessed via PYTHONPATH.
 
 Bootstrap: docker
-From: nvcr.io/nvidia/cuda:12.1.0-runtime-ubuntu22.04
+From: ubuntu:22.04
 
 %post
     apt-get update && apt-get install -y --no-install-recommends \
