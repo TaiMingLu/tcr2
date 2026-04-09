@@ -2,4 +2,4 @@ action: submit
 gpus: 1
 test: false
 milestone: method_runs
-notes: "GPU job for TCR reproduction: baseline + TCR on parity_nl at 10 and 20 hops. Container uses nvidia/cuda:12.1.0-runtime-ubuntu22.04."
+notes: "GPU job for TCR reproduction: baseline + TCR on parity_nl at 10 and 20 hops. Container uses nvidia/cuda:12.1.0-runtime-ubuntu22.04. Retry #2."
