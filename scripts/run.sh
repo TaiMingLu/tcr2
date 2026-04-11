@@ -1,7 +1,7 @@
 #!/bin/bash
 # GPU reproduction job for TCR paper (2601.21214).
-# Runs baseline and TCR on parity_nl tasks to demonstrate hop generalization.
-# Writes results to /home/user/scoring/scores.json.
+# Runs baseline and TCR on key reasoning hop generalization tasks.
+# Focus: Parity-NL at 50 hops (paper's main result) + 2 additional tasks.
 
 set -e
 
@@ -12,7 +12,7 @@ export HF_HOME="/home/user/shared/hf_cache"
 export TRANSFORMERS_CACHE="/home/user/shared/hf_cache"
 
 MODEL_NAME="${MODEL_NAME:-Qwen2.5-1.5B-Instruct}"
-NUM_SAMPLES="${NUM_SAMPLES:-100}"
+NUM_SAMPLES="${NUM_SAMPLES:-50}"
 SEED="${SEED:-42}"
 RESULTS_DIR="/home/user/results"
 
@@ -26,6 +26,8 @@ echo "============================================"
 echo ""
 echo "=== GPU Smoke Test ==="
 python3 -c "
+import sys
+sys.path.insert(0, '/home/user/pylibs')
 import torch
 print(f'PyTorch: {torch.__version__}')
 print(f'CUDA available: {torch.cuda.is_available()}')
@@ -38,9 +40,10 @@ if torch.cuda.is_available():
 echo ""
 echo "=== Model Loading Test ==="
 python3 -c "
-import sys, torch
+import sys
+sys.path.insert(0, '/home/user/pylibs')
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-sys.path.insert(0, '/home/user')
 model_path = '/home/user/shared/models/Qwen2.5-1.5B-Instruct'
 model = AutoModelForCausalLM.from_pretrained(
     model_path, torch_dtype=torch.float16, device_map='auto', low_cpu_mem_usage=True
@@ -53,34 +56,92 @@ import gc; gc.collect(); torch.cuda.empty_cache()
 print('Model test: PASSED')
 "
 
-# Run baseline and TCR for parity_nl at different hop counts
+mkdir -p "$RESULTS_DIR"
+
+# ============================================================
+# Key tasks from the paper:
+# 1. Parity-NL 50 hops (paper's main result)
+# 2. Parity-NL 10 hops (lower complexity)
+# 3. LLC 6 words (moderate complexity)
+# 4. MDM 3x6 digits (mathematical reasoning)
+# ============================================================
+
+echo ""
+echo "=== Baseline: parity_nl (50 hops) ==="
+python3 -m method.inference \
+    --task parity_nl \
+    --hop_count 50 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method baseline \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
+
+echo ""
+echo "=== TCR-gold: parity_nl (50 hops) ==="
+python3 -m method.inference \
+    --task parity_nl \
+    --hop_count 50 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method tcr_gold \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
+
 echo ""
 echo "=== Baseline: parity_nl (10 hops) ==="
 python3 -m method.inference \
-    --task parity_nl --hop_count 10 \
-    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
-    --method baseline --output_dir "$RESULTS_DIR" --seed $SEED
+    --task parity_nl \
+    --hop_count 10 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method baseline \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
 
 echo ""
-echo "=== TCR: parity_nl (10 hops) ==="
+echo "=== Baseline: LLC (6 words) ==="
 python3 -m method.inference \
-    --task parity_nl --hop_count 10 \
-    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
-    --method tcr --output_dir "$RESULTS_DIR" --seed $SEED
+    --task llc \
+    --hop_count 6 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method baseline \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
 
 echo ""
-echo "=== Baseline: parity_nl (20 hops) ==="
+echo "=== TCR-gold: LLC (6 words) ==="
 python3 -m method.inference \
-    --task parity_nl --hop_count 20 \
-    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
-    --method baseline --output_dir "$RESULTS_DIR" --seed $SEED
+    --task llc \
+    --hop_count 6 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method tcr_gold \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
 
 echo ""
-echo "=== TCR: parity_nl (20 hops) ==="
+echo "=== Baseline: MDM (3x6 digits) ==="
 python3 -m method.inference \
-    --task parity_nl --hop_count 20 \
-    --num_samples $NUM_SAMPLES --model_name "$MODEL_NAME" \
-    --method tcr --output_dir "$RESULTS_DIR" --seed $SEED
+    --task mdm \
+    --hop_count 6 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method baseline \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
+
+echo ""
+echo "=== TCR-gold: MDM (3x6 digits) ==="
+python3 -m method.inference \
+    --task mdm \
+    --hop_count 6 \
+    --num_samples $NUM_SAMPLES \
+    --model_name "$MODEL_NAME" \
+    --method tcr_gold \
+    --output_dir "$RESULTS_DIR" \
+    --seed $SEED
 
 # Evaluate and produce scores
 echo ""
@@ -93,5 +154,8 @@ python3 -m eval.evaluate \
 echo ""
 echo "============================================"
 echo "Reproduction complete!"
+echo "Results saved to: $RESULTS_DIR"
+echo "Scores written to: /home/user/scoring/scores.json"
+echo "============================================"
 cat /home/user/scoring/scores.json
 echo "============================================"
