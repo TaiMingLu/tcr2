@@ -17,7 +17,7 @@
     ]
   },
   "reproduction": {
-    "milestone": "method_runs",
+    "milestone": "none",
     "status": "done",
     "error": null,
     "scaffold": "claude-code",
@@ -25,13 +25,13 @@
     "profile": "minimax-medium",
     "effort": "medium",
     "gpu_hours_used": 0.0,
-    "current_iteration_gpu_budget": 80,
+    "current_iteration_gpu_budget": 30,
     "current_iteration_gpu_hours_used": 0.0,
     "total_gpu_hours_used": 0.0,
     "current_iteration_cpu_hours_used": 0.0,
     "total_cpu_hours_used": 0,
-    "gpu_budget": 80,
-    "duration_sec": 231618.7,
+    "gpu_budget": 30,
+    "duration_sec": 21.0,
     "cost_usd": 35.375,
     "input_tokens": 12264138,
     "output_tokens": 17985,
@@ -41,15 +41,12 @@
     "total_input_tokens": 17023361,
     "num_turns": 62,
     "duration_api_ms": 902445,
-    "num_runs": 2,
+    "num_runs": 3,
     "iteration_count": 0,
     "workflow": "standard",
     "workflow_step": 0,
     "total_gpu_jobs": 0,
-    "time_breakdown": {
-      "working": 1036.7471930980682,
-      "building": 9.38321852684021
-    }
+    "time_breakdown": {}
   },
   "agents": [
     {
@@ -138,6 +135,41 @@
       },
       "gpu_jobs": [],
       "progress_log": "### [2026-04-09] - method_runs (GPU job submitted)\n- Updated run.sh to execute GPU reproduction: baseline + TCR on parity_nl at 10 and 20 hops\n- Updated container.def to use nvidia/cuda:12.1.0-runtime-ubuntu22.04 for GPU support\n- Committed and pushed to GitHub (c14ec4e)\n- GPU job submitted via action.yaml:submit\n- Waiting for container build and job execution\n\n### [2026-04-08] - method_runs (submitted)\n- Git history rewritten: removed pylibs (19,989 files, 4.6GB) and trajectory files from git tracking\n- Git objects reduced from 2.5GB to 14MB\n- Successfully pushed to GitHub: https://github.com/TaiMingLu/tcr2\n- GPU job submitted for evaluation\n- Waiting for GPU job to execute and return results\n\n### [2026-04-07] - method_runs\n- Read paper thoroughly: TCR (Test-time Correction of Reasoning) for hop generalization\n- Paper studies why LLMs fail when reasoning hop counts exceed training distribution\n- Key finding: certain \"erroneous processing heads\" (ep heads) drive errors\n- TCR: dynamically identifies and deactivates ep heads at test time using entropy detection + head selector\n- Paper reports +6.8% average improvement on Qwen2.5-7B-Instruct across 7 tasks\n- Filled in all briefing files (problem, evaluation, method, overview)\n- Created data generation for all 7 tasks (Parity-NL, LLC, MDM, MOAS, CLF, ObjC, NumS)\n- Implemented TCR method with ep head candidates, entropy detection, baseline generation\n- Created evaluation pipeline with scoring/reference.json matching paper's Table 2\n- Created all scripts (evaluate.sh, reproduce.sh, method.sh, baseline.sh, download.sh)\n- Set up environment (container.def, setup.sh)\n- Downloaded Qwen2.5-0.5B-Instruct to workspace models\n- Qwen2.5-1.5B-Instruct available in shared models (28 layers, 12 heads)\n- Generated test data successfully for all 7 tasks\n- Pipeline verified: data generation, method imports, evaluation, model loading all working"
+    },
+    {
+      "scaffold": "claude-code",
+      "model": "MiniMax-M2.7",
+      "profile": "minimax-medium",
+      "effort": "medium",
+      "role": "reproducer",
+      "is_iteration": false,
+      "iteration": 1,
+      "workflow": "standard",
+      "workflow_step": 0,
+      "started_at": 1775874053.6773305,
+      "finished_at": 1775874074.8599014,
+      "duration_sec": 21.0,
+      "blocked_sec": 0.2,
+      "status": "done",
+      "error": null,
+      "milestone": "none",
+      "gpu_budget": 30,
+      "gpu_hours_used": 0.0,
+      "total_gpu_hours_used": 0.0,
+      "cpu_hours_used": 0.0,
+      "time_breakdown": {},
+      "cost_usd": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cached_input_tokens": 0,
+      "cache_creation_tokens": 0,
+      "reasoning_tokens": null,
+      "total_input_tokens": 0,
+      "num_turns": 0,
+      "duration_api_ms": 0,
+      "tool_uses": {},
+      "gpu_jobs": [],
+      "progress_log": ""
     }
   ],
   "components": {
