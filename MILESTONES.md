@@ -4,6 +4,11 @@
 
 ## Progress Log
 
+### [2026-04-13] - method_runs
+- Fixed generation parameters to match paper: do_sample=True, temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05
+- Simplified TCR-gold to use majority vote over ep head knockout responses
+- Submitting GPU job: baseline vs TCR-gold on Parity-NL (50/10 hops), LLC (6 words), MDM (3x6 digits), 50 samples each
+
 ### [2026-04-11] - method_runs
 - Rewrote inference.py with proper ep head knockout via forward hooks
 - Cleaned up tcr_model.py (removed duplicate code)

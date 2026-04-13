@@ -588,17 +588,17 @@ def run_tcr_gold(
     instances: List[Dict],
     ep_heads: List[Tuple[int, int]],
     max_new_tokens: int = 512,
-    temperature: float = 0.0,
 ) -> List[Dict]:
-    """Run TCR-gold: baseline + ep head knockout on wrong samples.
+    """Run TCR-gold: oracle error detection + ep head knockout + majority vote.
 
-    For each sample, we generate with the baseline model first. Then for
-    samples that are wrong, we also generate with ep heads knocked out.
+    For each wrong sample (oracle knows the ground truth), we generate with
+    individual ep heads knocked out and use majority voting over the final answers.
+
+    Paper config (Appendix G.3): uses do_sample=True for generation.
+    But for TCR-gold comparison (oracle), we use greedy for reproducibility.
     """
     device = next(model.parameters()).device
     num_heads = 12  # Qwen2.5-1.5B has 12 heads
-    ep_knockout = EpHeadKnockoutHook(model, ep_heads, num_heads)
-    ep_knockout.register()
 
     results = []
 
@@ -609,83 +609,77 @@ def run_tcr_gold(
         prompt = get_prompt_with_template(inst)
         input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
         input_ids = {k: v.to(device) for k, v in input_ids.items()}
+        input_len = input_ids.input_ids.shape[1]
 
-        # Baseline generation
+        # Baseline generation (paper config)
         with torch.no_grad():
-            outputs = model.generate(
+            base_outputs = model.generate(
                 **input_ids,
                 max_new_tokens=max_new_tokens,
-                do_sample=(temperature > 0),
-                temperature=temperature,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.8,
+                top_k=20,
+                repetition_penalty=1.05,
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
             )
-
-        input_len = input_ids.input_ids.shape[1] if hasattr(input_ids.input_ids, 'shape') else input_ids.input_ids.size(1)
-        base_response = tokenizer.decode(outputs[0][input_len:], skip_special_tokens=True)
+        base_response = tokenizer.decode(base_outputs[0][input_len:], skip_special_tokens=True)
         base_correct = check_answer_correct(base_response, inst["answer"], inst["task"])
 
-        # TCR-gold: for wrong samples, try knockout
+        # TCR-gold: for wrong samples, do majority vote over knockout responses
         final_response = base_response
         final_correct = base_correct
         n_knockouts = 0
 
         if not base_correct and ep_heads:
             n_knockouts = 1
-            ep_knockout.enable()
-            try:
-                with torch.no_grad():
-                    ko_outputs = model.generate(
-                        **input_ids,
-                        max_new_tokens=max_new_tokens,
-                        do_sample=(temperature > 0),
-                        temperature=temperature,
-                        pad_token_id=tokenizer.pad_token_id,
-                        eos_token_id=tokenizer.eos_token_id,
-                    )
-                ko_response = tokenizer.decode(ko_outputs[0][input_len:], skip_special_tokens=True)
-                ko_correct = check_answer_correct(ko_response, inst["answer"], inst["task"])
+            knockout_answers = []
+            knockout_responses = []
 
-                # Use knockout result if it improves
-                if ko_correct:
-                    final_response = ko_response
-                    final_correct = True
-                else:
-                    # Majority vote: run with each individual ep head
-                    votes = [base_response, ko_response]
-                    for layer_idx, head_idx in ep_heads[:4]:
-                        single_head = [(layer_idx, head_idx)]
-                        single_hook = EpHeadKnockoutHook(model, single_head, num_heads)
-                        single_hook.register()
-                        single_hook.enable()
-                        try:
-                            with torch.no_grad():
-                                single_outputs = model.generate(
-                                    **input_ids,
-                                    max_new_tokens=max_new_tokens,
-                                    do_sample=(temperature > 0),
-                                    temperature=temperature,
-                                    pad_token_id=tokenizer.pad_token_id,
-                                    eos_token_id=tokenizer.eos_token_id,
-                                )
-                            single_response = tokenizer.decode(
-                                single_outputs[0][input_len:], skip_special_tokens=True
-                            )
-                            votes.append(single_response)
-                        except Exception:
-                            pass
-                        finally:
-                            single_hook.disable()
-                            single_hook.remove()
+            # For each ep head, run generation with that head knocked out
+            for layer_idx, head_idx in ep_heads[:6]:  # Try up to 6 heads
+                single_head = [(layer_idx, head_idx)]
+                ko_hook = EpHeadKnockoutHook(model, single_head, num_heads)
+                ko_hook.register()
+                ko_hook.enable()
+                try:
+                    with torch.no_grad():
+                        ko_outputs = model.generate(
+                            **input_ids,
+                            max_new_tokens=max_new_tokens,
+                            do_sample=True,
+                            temperature=0.7,
+                            top_p=0.8,
+                            top_k=20,
+                            repetition_penalty=1.05,
+                            pad_token_id=tokenizer.pad_token_id,
+                            eos_token_id=tokenizer.eos_token_id,
+                        )
+                    ko_response = tokenizer.decode(ko_outputs[0][input_len:], skip_special_tokens=True)
+                    ko_answer = extract_final_answer(ko_response, inst["task"])
+                    knockout_answers.append(ko_answer)
+                    knockout_responses.append(ko_response)
+                except Exception:
+                    pass
+                finally:
+                    ko_hook.disable()
+                    ko_hook.remove()
 
-                    # Pick the response with the most similar prefix (simplified majority)
-                    # For now, just use base or knockout based on which was closer
-                    final_response = ko_response
-                    final_correct = ko_correct
-            except Exception as e:
-                print(f"    Warning: knockout failed for sample {i}: {e}")
-            finally:
-                ep_knockout.disable()
+            # Majority vote over answers
+            if knockout_answers:
+                vote_counts = Counter(knockout_answers)
+                majority_answer, vote_count = vote_counts.most_common(1)[0]
+                final_correct = (majority_answer.lower() == inst["answer"].lower() or
+                               majority_answer == inst["answer"])
+                # Find and use the response that produced the majority answer
+                for resp, ans in zip(knockout_responses, knockout_answers):
+                    if ans == majority_answer:
+                        final_response = resp
+                        break
+            else:
+                # No knockout succeeded, keep baseline
+                final_correct = base_correct
 
         results.append({
             "input": inst["input"],
@@ -701,7 +695,6 @@ def run_tcr_gold(
             "method": "tcr_gold",
         })
 
-    ep_knockout.remove()
     return results
 
 

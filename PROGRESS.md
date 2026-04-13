@@ -16,7 +16,7 @@
 
 ## Results
 
-**Pending GPU evaluation.** Job submitted to cluster.
+**GPU job submitted.** Running baseline vs TCR-gold on Parity-NL(50/10 hops), LLC(6 words), MDM(3x6 digits) with 50 samples each.
 
 ## Remaining
 
