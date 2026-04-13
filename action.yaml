@@ -2,4 +2,4 @@ action: submit
 gpus: 1
 test: false
 milestone: method_runs
-notes: "Resubmit after transient build abort. End-to-end TCR reproduction: baseline vs TCR-gold on Parity-NL (50/10 hops), LLC (6 words), MDM (3x6 digits). 50 samples each."
+notes: "Resubmit after transient build abort. End-to-end TCR reproduction: baseline vs TCR-gold on Parity-NL (50/10 hops), LLC (6 words), MDM (3x6 digits). 50 samples each. Fixed generation params (do_sample=True, temp=0.7)."
