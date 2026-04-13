@@ -531,11 +531,14 @@ def run_baseline(
     tokenizer,
     instances: List[Dict],
     max_new_tokens: int = 512,
-    temperature: float = 0.0,
 ) -> List[Dict]:
-    """Run baseline generation (no intervention)."""
+    """Run baseline generation (no intervention).
+
+    Paper generation config (Qwen2.5-7B-Instruct):
+    - do_sample=True, temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05
+    """
     results = []
-    ep_knockout = EpHeadKnockoutHook(model, [], 12)  # No knockout
+    device = next(model.parameters()).device
 
     for i, inst in enumerate(instances):
         if i % 20 == 0:
@@ -543,14 +546,17 @@ def run_baseline(
 
         prompt = get_prompt_with_template(inst)
         input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-        input_ids = {k: v.to(next(model.parameters()).device) for k, v in input_ids.items()}
+        input_ids = {k: v.to(device) for k, v in input_ids.items()}
 
         with torch.no_grad():
             outputs = model.generate(
                 **input_ids,
                 max_new_tokens=max_new_tokens,
-                do_sample=(temperature > 0),
-                temperature=temperature,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.8,
+                top_k=20,
+                repetition_penalty=1.05,
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
             )

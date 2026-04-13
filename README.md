@@ -236,14 +236,12 @@ The goal of reproduction is to demonstrate that the proposed method (TCR) achiev
 
 </details>
 
+### Iteration 1: MiniMax-M2.7
+- **Milestone**: `method_runs` | **Status**: done
+- **GPU**: 0.0h
 
----
-
-# Reproduction Milestones
-
-**Current: method_runs**
-
-## Progress Log
+<details>
+<summary>Progress Log</summary>
 
 ### [2026-04-11] - method_runs
 - Rewrote inference.py with proper ep head knockout via forward hooks
@@ -264,3 +262,12 @@ The goal of reproduction is to demonstrate that the proposed method (TCR) achiev
 
 ### [2026-04-07] - none
 - Just started reproduction work
+
+</details>
+
+
+---
+
+# Reproduction Milestones
+
+**Current: method_runs**
