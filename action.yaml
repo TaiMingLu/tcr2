@@ -1,8 +1,5 @@
-# IMPORTANT: Once you set action to 'submit' or 'done', STOP immediately.
-# Do NOT sleep, poll, or wait for jobs. The system reads this file
-# only after your turn ends. Sleeping blocks the entire pipeline.
-action: pending
+action: submit
 gpus: 1
 test: false
-milestone: none
-notes: ""
+milestone: method_runs
+notes: "TCR reproduction job: baseline vs TCR-gold on Parity-NL(50/10 hops), LLC(6 words), MDM(3x6 digits), 50 samples each. Ep head knockout via forward hooks + majority vote. do_sample=True, temp=0.7, top_p=0.8, top_k=20, rep_penalty=1.05."
