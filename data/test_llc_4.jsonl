@@ -1,0 +1,3 @@
+{"task": "llc", "hop_count": 4, "input": "Take the last letter of each of the following words and concatenate them: harbor, banana, river, planet.", "answer": "rart", "words": ["harbor", "banana", "river", "planet"], "seed": 42}
+{"task": "llc", "hop_count": 4, "input": "Take the last letter of each of the following words and concatenate them: cherry, shadow, jungle, flower.", "answer": "ywer", "words": ["cherry", "shadow", "jungle", "flower"], "seed": 43}
+{"task": "llc", "hop_count": 4, "input": "Take the last letter of each of the following words and concatenate them: castle, journey, kernel, harbor.", "answer": "eylr", "words": ["castle", "journey", "kernel", "harbor"], "seed": 44}

@@ -1,0 +1,3 @@
+{"task": "mdm", "hop_count": 2, "digits_a": 2, "digits_b": 2, "input": "91 * 24 = ? Please think step by step.", "answer": "2184", "operand_a": 91, "operand_b": 24, "seed": 42}
+{"task": "mdm", "hop_count": 2, "digits_a": 2, "digits_b": 2, "input": "14 * 46 = ? Please think step by step.", "answer": "644", "operand_a": 14, "operand_b": 46, "seed": 43}
+{"task": "mdm", "hop_count": 2, "digits_a": 2, "digits_b": 2, "input": "62 * 76 = ? Please think step by step.", "answer": "4712", "operand_a": 62, "operand_b": 76, "seed": 44}

@@ -26,6 +26,32 @@ From: nvidia/cuda:12.1.0-runtime-ubuntu22.04
     mkdir -p /home/user/data
     chmod 755 /home/user
 
+
+    # --- Merged from setup.sh ---
+    pip install --break-system-packages uv 2>/dev/null || pip install uv 2>/dev/null || true
+    export UV_SYSTEM_PYTHON=1 UV_BREAK_SYSTEM_PACKAGES=1
+    # Install Python packages into the container overlay.
+    # uv is pre-installed in the base CUDA container.
+    
+    set -e
+    
+    echo "=== Installing Python packages for TCR environment ==="
+    
+    # Install core packages - these are cached locally in /home/user/pylibs
+    # but we reinstall to ensure they're in the system Python
+    uv pip install --system \
+        torch \
+        numpy \
+        scipy \
+        scikit-learn \
+        transformers \
+        huggingface_hub \
+        accelerate \
+        peft \
+        tqdm
+    
+    echo "=== Package installation complete ==="
+
 %environment
     export HOME=/home/user
     export PYTHONUNBUFFERED=1
